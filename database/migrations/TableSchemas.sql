@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS branch (
+  id SERIAL PRIMARY KEY,
+  parent_message_id INT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS message (
+  id SERIAL PRIMARY KEY,
+  branch_id INT REFERENCES branch(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
