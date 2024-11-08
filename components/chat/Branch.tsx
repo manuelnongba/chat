@@ -17,10 +17,20 @@ export default function Branch({
 
   useEffect(() => {
     if (swipeToLast && swiperRef.current) {
-      swiperRef.current.slideTo(branches.length - 1);
+      const latestBranch = branches.length - 1;
+      swiperRef?.current?.slideTo(latestBranch);
       setSwipeToLast(false);
     }
   }, [swipeToLast, branches]);
+
+  const handleSwiper = (swiper: SwiperClass) => {
+    swiperRef.current = swiper;
+    if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
+  };
+
+  const handleSlideChange = (swiper: SwiperClass) => {
+    if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
+  };
 
   return (
     <div>
@@ -31,13 +41,8 @@ export default function Branch({
           slidesPerView={1}
           navigation
           pagination={{ clickable: true }}
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper;
-            if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
-          }}
-          onSlideChange={(swiper) => {
-            if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
-          }}
+          onSwiper={handleSwiper}
+          onSlideChange={handleSlideChange}
         >
           {branches.map((branch) => (
             <SwiperSlide key={branch?.id} className="w-full">

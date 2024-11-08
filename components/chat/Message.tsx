@@ -16,10 +16,6 @@ export default function Message({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (!isEditing) setMessageContent(messages);
-  }, [messages, isEditing]);
-
-  useEffect(() => {
     if (messageEndRef?.current) {
       const container = messageEndRef?.current;
       if (isAtBottom) {
@@ -28,38 +24,9 @@ export default function Message({
     }
   }, [messages, isAtBottom]);
 
-  const handleEdit = async (messageID: number, index: number) => {
-    const branchPayload = { parent_message_id: messageID };
-    const { data, error } = await createBranch(branchPayload);
-
-    if (error) {
-      showAlert('error', 'Something went wrong! Try again.');
-      return;
-    }
-
-    if (data) {
-      const messagePayload: IDBMessage = {
-        branch_id: data.id,
-        content: messageContent[index]?.content,
-      };
-
-      const { error } = await createMessage(messagePayload);
-
-      if (error) {
-        showAlert('error', 'Something went wrong! Try again.');
-        return;
-      }
-    }
-
-    if (getMessages) getMessages();
-
-    setMessageEditIndex([]);
-
-    setTimeout(() => {
-      if (setSwipeToLast) setSwipeToLast(true);
-    }, 400);
-    setIsEditing(false);
-  };
+  useEffect(() => {
+    if (!isEditing) setMessageContent(messages);
+  }, [messages, isEditing]);
 
   const handleScroll = () => {
     const container = messageEndRef?.current;
@@ -76,6 +43,35 @@ export default function Message({
         i === index ? { ...message, content: newContent } : message
       )
     );
+  };
+
+  const handleEdit = async (messageID: number, index: number) => {
+    const branchPayload = { parent_message_id: messageID };
+    const { data, error } = await createBranch(branchPayload);
+
+    if (error) {
+      showAlert('error', 'Something went wrong! Try again.');
+      return;
+    }
+
+    if (data) {
+      const messagePayload: IDBMessage = {
+        branch_id: data.id,
+        content: messageContent[index]?.content,
+      };
+      const { error } = await createMessage(messagePayload);
+      if (error) {
+        showAlert('error', 'Something went wrong! Try again.');
+        return;
+      }
+    }
+
+    if (getMessages) getMessages();
+    setMessageEditIndex([]);
+    setTimeout(() => {
+      if (setSwipeToLast) setSwipeToLast(true);
+    }, 400);
+    setIsEditing(false);
   };
 
   return (
@@ -109,28 +105,12 @@ export default function Message({
                     callBack={() => handleEdit(message?.id, index)}
                     className="mt-2 bg-[#495057] text-white px-2 py-1 rounded"
                   />
-                  {/* <button
-                    onClick={() => {
-                      setMessageEditIndex((messageEditIndex) =>
-                        [...messageEditIndex].filter((i) => i !== index)
-                      );
-                    }}
-                    className="mt-2 ml-2 bg-gray-100 px-2 py-1 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleEdit(message?.id, index)}
-                    className="mt-2 bg-[#495057] text-white px-2 py-1 rounded"
-                  >
-                    Submit
-                  </button> */}
                 </div>
               </div>
             ) : (
               <>
                 <GoPencil
-                  color="black"
+                  color="gray"
                   onClick={() => {
                     setMessageEditIndex((messageEditIndex) => [
                       ...messageEditIndex,

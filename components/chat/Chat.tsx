@@ -5,7 +5,7 @@ import { FaArrowCircleUp } from 'react-icons/fa';
 import { showAlert } from '@/utils/error';
 
 export default function Chat({ branches, getMessages }: BranchesProps) {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState<string>('');
   const [branchID, setBranchID] = useState<number | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -19,25 +19,22 @@ export default function Chat({ branches, getMessages }: BranchesProps) {
 
     if (branches.length === 0) {
       const { data, error } = await createBranch();
-
       if (error) {
         showAlert('error', 'Something went wrong! Try again.');
         return;
       }
-
       messagePayload.branch_id = data.id;
     }
 
     if (messagePayload.branch_id) {
       const { error } = await createMessage(messagePayload);
-
       if (error) {
         showAlert('error', 'Something went wrong! Try again.');
         return;
       }
     }
-    if (getMessages) getMessages();
 
+    if (getMessages) getMessages();
     setInput('');
   };
 
