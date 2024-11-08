@@ -1,13 +1,14 @@
-import { createBranch, createMessage } from '@/libs/apis/messages';
+import { createBranch, createMessage } from '@/services/apis/messages';
 import { useEffect, useRef, useState } from 'react';
 import { GoPencil } from 'react-icons/go';
 import Button from '../common/Button';
+import { showAlert } from '@/utils/error';
 
 export default function Message({
   messages,
   setSwipeToLast,
   getMessages,
-}: Messages) {
+}: MessagesProps) {
   const [messageContent, setMessageContent] = useState<Message[]>(messages);
   const [messageEditIndex, setMessageEditIndex] = useState<number[]>([]);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
@@ -30,26 +31,33 @@ export default function Message({
   const handleEdit = async (messageID: number, index: number) => {
     const branchPayload = { parent_message_id: messageID };
     const { data, error } = await createBranch(branchPayload);
-    console.log(error);
+
+    if (error) {
+      showAlert('error', 'Something went wrong! Try again.');
+      return;
+    }
 
     if (data) {
-      const messagePayload = {
+      const messagePayload: IDBMessage = {
         branch_id: data.id,
         content: messageContent[index]?.content,
       };
-      await createMessage(messagePayload);
+
+      const { error } = await createMessage(messagePayload);
+
+      if (error) {
+        showAlert('error', 'Something went wrong! Try again.');
+        return;
+      }
     }
 
-    // setMessageEditIndex((messageEditIndex) =>
-    //   [...messageEditIndex].filter((i) => i !== index)
-    // );
     if (getMessages) getMessages();
 
     setMessageEditIndex([]);
 
     setTimeout(() => {
       if (setSwipeToLast) setSwipeToLast(true);
-    }, 500);
+    }, 400);
     setIsEditing(false);
   };
 

@@ -34,3 +34,94 @@ body {
   /* scrollbar-width: thin; */
   scrollbar-color: rgba(149, 149, 149, 0.1) transparent;
 }
+
+.alert {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  z-index: 9999;
+  color: #000;
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  padding: 7px 10px;
+  -webkit-box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.alert .svg-wrapper {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert--success .svg-wrapper {
+  background-color: #20bf6b;
+}
+
+.alert--error .svg-wrapper {
+  background-color: #fa5252;
+}
+
+.alert--update .svg-wrapper {
+  background-color: #ffd43b;
+}
+
+.alert .ionicon {
+  height: 35px;
+  width: 35px;
+
+  fill: #fff;
+}
+
+.alert--success .ionicon path {
+  fill: #fff;
+  stroke: green;
+}
+
+.alert--error .ionicon path {
+  fill: #fff;
+  stroke: #ff8787;
+}
+
+.alert--update .ionicon {
+  /* fill: #000; */
+  stroke: #ffd43b;
+}
+
+.alert--update .ionicon {
+  fill: #000 !important;
+}
+
+.alert--success {
+  background-color: #d3f9d8;
+}
+.alert--error {
+  background-color: #ff8787;
+}
+.alert--update {
+  background-color: #ffec99;
+}
+
+.error {
+  margin: 50px auto;
+  font-size: 1.4rem;
+
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}

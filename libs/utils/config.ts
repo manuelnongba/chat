@@ -1,4 +1,0 @@
-export const SUPABASE_API_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtodHpxY25vcG5xb2lkb3lnb2p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA2MjY5ODUsImV4cCI6MjA0NjIwMjk4NX0.cRdV0vVM8g-ghLoTykh2oyVNRJRh17NK6PJdvqBIROA';
-
-export const SUPABASE_URL = 'https://khtzqcnopnqoidoygojz.supabase.co';
