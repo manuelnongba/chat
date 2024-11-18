@@ -7,13 +7,11 @@ export const createMessage = async (payload: IDBMessage) => {
 };
 
 export const getAllMessages = async () => {
-  return await supabase
-    .from('branch')
-    .select('id, created_at, message (id, content)');
+  return await supabase.from('get_messages').select();
 };
 
 export const createBranch = async (
-  payload: IDBBranch = { parent_message_id: null }
+  payload: IDBBranch | number = { parent_message_id: null }
 ) => {
   return await supabase.from('branch').insert(payload).select().single();
 };

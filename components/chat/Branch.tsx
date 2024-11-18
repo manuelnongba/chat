@@ -1,61 +1,94 @@
-import { A11y, Navigation, Pagination, Scrollbar } from 'swiper/modules';
-import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/scrollbar';
-import Message from './Message';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Button from '../common/Button';
+import { showAlert } from '@/utils/error';
+import { createMessage } from '@/services/apis/messages';
+import { GoPencil } from 'react-icons/go';
 
 export default function Branch({
-  branches,
-  setBranchID,
+  message,
   getMessages,
+  index,
+  branchID,
+  setSwipeToLast,
+  setMsgIndex,
 }: BranchesProps) {
-  const [swipeToLast, setSwipeToLast] = useState(false);
-  const swiperRef = useRef<SwiperClass>();
+  const [messageContent, setMessageContent] = useState<Message>(message);
+  const [messageEditIndex, setMessageEditIndex] = useState<number[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (swipeToLast && swiperRef.current) {
-      const latestBranch = branches.length - 1;
-      swiperRef?.current?.slideTo(latestBranch);
-      setSwipeToLast(false);
-    }
-  }, [swipeToLast, branches]);
+    if (!isEditing) setMessageContent(message);
+  }, [message, isEditing]);
 
-  const handleSwiper = (swiper: SwiperClass) => {
-    swiperRef.current = swiper;
-    if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
+  const handleContentChange = (index: number, newContent: string) => {
+    setMessageContent({ ...messageContent, content: newContent });
   };
 
-  const handleSlideChange = (swiper: SwiperClass) => {
-    if (setBranchID) setBranchID(branches[swiper?.activeIndex]?.id);
+  const handleEdit = async () => {
+    const messagePayload: IDBMessage = {
+      branch_id: branchID,
+      content: messageContent?.content,
+    };
+    const { error } = await createMessage(messagePayload);
+    if (error) {
+      showAlert('error', 'Something went wrong! Try again.');
+      return;
+    }
+
+    if (getMessages) getMessages();
+    setMessageEditIndex([]);
+    setTimeout(() => {
+      if (setSwipeToLast) setSwipeToLast(true);
+    }, 350);
+    setIsEditing(false);
   };
 
   return (
-    <div>
-      {branches?.length > 0 ? (
-        <Swiper
-          modules={[Navigation, Pagination, Scrollbar, A11y]}
-          spaceBetween={50}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          onSwiper={handleSwiper}
-          onSlideChange={handleSlideChange}
-        >
-          {branches.map((branch) => (
-            <SwiperSlide key={branch?.id} className="w-full">
-              <Message
-                messages={branch?.message}
-                setSwipeToLast={setSwipeToLast}
-                getMessages={getMessages}
-              />
-            </SwiperSlide>
-          ))}
-        </Swiper>
+    <div className="flex items-center justify-end">
+      {messageEditIndex?.includes(index) ? (
+        <div className="flex flex-col">
+          <textarea
+            value={messageContent?.content || ''}
+            onChange={(e) => handleContentChange(index, e?.target?.value)}
+            className="w-full p-2 border rounded-md bg-gray-100 mt-5 focus:outline-none"
+          />
+          <div className="flex justify-between">
+            <Button
+              text="Cancel"
+              callBack={() => {
+                setMessageEditIndex((messageEditIndex) =>
+                  [...messageEditIndex].filter((i) => i !== index)
+                );
+              }}
+              className="mt-2 ml-2 bg-gray-100 px-2 py-1 rounded"
+            />
+            <Button
+              text="Send"
+              callBack={() => handleEdit()}
+              className="mt-2 bg-[#495057] text-white px-2 py-1 rounded"
+            />
+          </div>
+        </div>
       ) : (
-        <></>
+        <>
+          <GoPencil
+            color="gray"
+            onClick={() => {
+              setMessageEditIndex((messageEditIndex) => [
+                ...messageEditIndex,
+                index,
+              ]);
+              setIsEditing(true);
+              if (setMsgIndex) {
+                setMsgIndex(index);
+              }
+            }}
+            className="cursor-pointer"
+          />
+          <div className="bg-gray-100 p-2.5 rounded-full m-4 mr-[30px]">
+            {message?.content}
+          </div>
+        </>
       )}
     </div>
   );

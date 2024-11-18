@@ -27,6 +27,23 @@ body {
 
 .swiper {
   height: inherit;
+  position: relative;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  width: 5px;
+  height: 5px;
+}
+
+.swiper-button-prev {
+  position: absolute !important;
+  left: 100px !important;
+}
+
+.swiper-button-next {
+  position: absolute !important;
+  right: -5px !important;
 }
 
 .message-container {

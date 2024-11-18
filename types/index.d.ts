@@ -1,10 +1,25 @@
 interface Branch {
-  id: number;
-  created_at: string;
-  message: Message[];
+  branch_id: number;
+  created_at?: string;
+  messages: Message[] | unknown;
 }
 
 interface Message {
   id: number;
   content: string;
+  parent_message_id: number | null;
+}
+
+interface Messages {
+  branch_id: number;
+  created_at?: string;
+  messages: Message[];
+}
+
+interface FMessages {
+  message: {
+    message: Message;
+    branch_id: number;
+  };
+  i: number;
 }

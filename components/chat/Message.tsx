@@ -1,19 +1,112 @@
-import { createBranch, createMessage } from '@/services/apis/messages';
 import { useEffect, useRef, useState } from 'react';
-import { GoPencil } from 'react-icons/go';
-import Button from '../common/Button';
-import { showAlert } from '@/utils/error';
+import Branch from './Branch';
+import { A11y, Navigation, Pagination, Scrollbar } from 'swiper/modules';
+import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/scrollbar';
 
 export default function Message({
   messages,
-  setSwipeToLast,
+  setMessages,
+  setParentMessageID,
   getMessages,
 }: MessagesProps) {
-  const [messageContent, setMessageContent] = useState<Message[]>(messages);
-  const [messageEditIndex, setMessageEditIndex] = useState<number[]>([]);
+  const [messagesContent, setMessagesContent] = useState<Messages[]>(messages);
+  const [swipeToLast, setSwipeToLast] = useState(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const swiperRef = useRef<SwiperClass[]>([]);
+  const [swiperIndex, setSwiperIndex] = useState<number>(0);
+  const [messages2, setMessages2] = useState<Message[]>([]);
+  const [msgIndex, setMsgIndex] = useState<number>(0);
+
+  useEffect(() => {
+    if (
+      messages?.length > messagesContent?.length ||
+      messages[msgIndex]?.messages?.length >
+        messagesContent[msgIndex]?.messages?.length
+    ) {
+      setMessagesContent(messages);
+    }
+  }, [messages, messagesContent.length, msgIndex, messagesContent]);
+
+  const groupMessagesByBranch = (data: FMessages[]): Messages[] => {
+    const grouped: any = {};
+
+    data.forEach((item) => {
+      const { branch_id } = item.message;
+      const { id, content, parent_message_id } = item.message.message;
+
+      if (!grouped[branch_id]) {
+        grouped[branch_id] = {
+          branch_id,
+          messages: [],
+        };
+      }
+
+      grouped[branch_id].messages.push({ id, content, parent_message_id });
+    });
+
+    return Object.values(grouped);
+  };
+
+  const messageBranching = (
+    swiperIndex: number,
+    messagess: Message[],
+    msgIndex: number,
+    state: boolean = false
+  ) => {
+    const activeMessage = messagess
+      ?.map((branch) => branch)
+      .find((_, index) => index === swiperIndex);
+
+    if (activeMessage) {
+      const childMessage = messagesContent
+        .flatMap((branch, i) =>
+          branch.messages.map((message) => ({
+            message: { message, branch_id: branch.branch_id },
+            i,
+          }))
+        )
+        .filter(({ message, i }) => {
+          if (i <= msgIndex) return message;
+        });
+
+      findNext(messages[msgIndex]?.messages[swiperIndex]);
+      function findNext(activeMessage: Message) {
+        const nextMessage = messagesContent
+          .flatMap((branch, i) =>
+            branch.messages.map((message) => ({
+              message: { message, branch_id: branch.branch_id },
+              i,
+            }))
+          )
+          .filter(({ message }) => {
+            return message?.message?.parent_message_id === activeMessage?.id;
+          });
+
+        if (nextMessage.length > 0) {
+          nextMessage.map((message) => childMessage.push(message));
+          findNext(nextMessage[0]?.message.message);
+        } else return;
+      }
+
+      if (setParentMessageID)
+        setParentMessageID(
+          childMessage[childMessage.length - 1]?.message?.message?.id
+        );
+
+      const res: Messages[] = groupMessagesByBranch(childMessage);
+
+      if (setMessages && state) setMessages(res);
+    }
+  };
+
+  useEffect(() => {
+    messageBranching(swiperIndex, messages2, msgIndex);
+  }, [messagesContent.length, messages.length]);
 
   useEffect(() => {
     if (messageEndRef?.current) {
@@ -22,11 +115,7 @@ export default function Message({
         container.scrollTop = container?.scrollHeight;
       }
     }
-  }, [messages, isAtBottom]);
-
-  useEffect(() => {
-    if (!isEditing) setMessageContent(messages);
-  }, [messages, isEditing]);
+  }, [isAtBottom]);
 
   const handleScroll = () => {
     const container = messageEndRef?.current;
@@ -37,42 +126,40 @@ export default function Message({
     }
   };
 
-  const handleContentChange = (index: number, newContent: string) => {
-    setMessageContent((prevMessageContent) =>
-      prevMessageContent.map((message, i) =>
-        i === index ? { ...message, content: newContent } : message
-      )
-    );
+  const handleSwiper = (
+    swiper: SwiperClass,
+    messagess: Message[],
+    msgIndex: number
+  ) => {
+    swiperRef.current[msgIndex] = swiper;
+
+    setSwiperIndex(swiper.activeIndex);
+    setMessages2(messagess);
+    setMsgIndex(msgIndex);
+    messageBranching(swiper.activeIndex, messagess, msgIndex);
   };
 
-  const handleEdit = async (messageID: number, index: number) => {
-    const branchPayload = { parent_message_id: messageID };
-    const { data, error } = await createBranch(branchPayload);
-
-    if (error) {
-      showAlert('error', 'Something went wrong! Try again.');
-      return;
-    }
-
-    if (data) {
-      const messagePayload: IDBMessage = {
-        branch_id: data.id,
-        content: messageContent[index]?.content,
-      };
-      const { error } = await createMessage(messagePayload);
-      if (error) {
-        showAlert('error', 'Something went wrong! Try again.');
-        return;
-      }
-    }
-
-    if (getMessages) getMessages();
-    setMessageEditIndex([]);
-    setTimeout(() => {
-      if (setSwipeToLast) setSwipeToLast(true);
-    }, 400);
-    setIsEditing(false);
+  const handleSlideChange = (
+    swiper: SwiperClass,
+    messagess: Message[],
+    msgIndex: number
+  ) => {
+    setSwiperIndex(swiper.activeIndex);
+    messageBranching(swiper.activeIndex, messagess, msgIndex, true);
   };
+
+  useEffect(() => {
+    if (swipeToLast && swiperRef.current) {
+      swiperRef?.current[msgIndex]?.slideTo(messages2.length);
+      setSwipeToLast(false);
+    }
+  }, [
+    messagesContent,
+    messages.length,
+    swipeToLast,
+    messages2.length,
+    msgIndex,
+  ]);
 
   return (
     <div
@@ -80,52 +167,47 @@ export default function Message({
       ref={messageEndRef}
       onScroll={handleScroll}
     >
-      {messages.map((message: Message, index: number) => {
-        return (
-          <div key={message?.id} className="flex items-center justify-center">
-            {messageEditIndex.includes(index) ? (
-              <div className="flex flex-col">
-                <textarea
-                  value={messageContent[index]?.content || ''}
-                  onChange={(e) => handleContentChange(index, e?.target?.value)}
-                  className="w-full p-2 border rounded-md bg-gray-100 mt-5 focus:outline-none"
-                />
-                <div className="flex justify-between">
-                  <Button
-                    text="Cancel"
-                    callBack={() => {
-                      setMessageEditIndex((messageEditIndex) =>
-                        [...messageEditIndex].filter((i) => i !== index)
-                      );
-                    }}
-                    className="mt-2 ml-2 bg-gray-100 px-2 py-1 rounded"
+      {messages.map((branch: Messages, index: number) => {
+        return branch.messages.length > 1 ? (
+          <div className="w-[600px] h-[100px]" key={index}>
+            <Swiper
+              modules={[Navigation, Pagination, Scrollbar, A11y]}
+              spaceBetween={50}
+              slidesPerView={1}
+              navigation
+              pagination={{ clickable: true }}
+              onSwiper={(swiper) => {
+                handleSwiper(swiper, branch.messages, index);
+              }}
+              onSlideChange={(swiper: SwiperClass) =>
+                handleSlideChange(swiper, branch.messages, index)
+              }
+              key={index}
+            >
+              {branch.messages.map((message, i) => (
+                <SwiperSlide key={i} className="flex justify-center">
+                  <Branch
+                    message={message}
+                    index={index}
+                    branchID={branch.branch_id}
+                    getMessages={getMessages}
+                    setSwipeToLast={setSwipeToLast}
+                    setMsgIndex={setMsgIndex}
                   />
-                  <Button
-                    text="Send"
-                    callBack={() => handleEdit(message?.id, index)}
-                    className="mt-2 bg-[#495057] text-white px-2 py-1 rounded"
-                  />
-                </div>
-              </div>
-            ) : (
-              <>
-                <GoPencil
-                  color="gray"
-                  onClick={() => {
-                    setMessageEditIndex((messageEditIndex) => [
-                      ...messageEditIndex,
-                      index,
-                    ]);
-                    setIsEditing(true);
-                  }}
-                  className="cursor-pointer"
-                />
-                <div className="bg-gray-100 p-2.5 rounded-full m-4">
-                  {message?.content}
-                </div>
-              </>
-            )}
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
+        ) : (
+          <Branch
+            message={branch.messages[0]}
+            index={index}
+            key={index}
+            branchID={branch.branch_id}
+            getMessages={getMessages}
+            setSwipeToLast={setSwipeToLast}
+            setMsgIndex={setMsgIndex}
+          />
         );
       })}
     </div>
