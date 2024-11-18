@@ -39,7 +39,7 @@ export default function Branch({
     setMessageEditIndex([]);
     setTimeout(() => {
       if (setSwipeToLast) setSwipeToLast(true);
-    }, 350);
+    }, 500);
     setIsEditing(false);
   };
 

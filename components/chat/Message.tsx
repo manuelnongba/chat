@@ -12,6 +12,7 @@ export default function Message({
   setMessages,
   setParentMessageID,
   getMessages,
+  setInitParentMessageID,
 }: MessagesProps) {
   const [messagesContent, setMessagesContent] = useState<Messages[]>(messages);
   const [swipeToLast, setSwipeToLast] = useState(false);
@@ -93,14 +94,14 @@ export default function Message({
         } else return;
       }
 
-      if (setParentMessageID)
-        setParentMessageID(
-          childMessage[childMessage.length - 1]?.message?.message?.id
-        );
+      if (setParentMessageID && setInitParentMessageID) {
+        setInitParentMessageID(false);
+        setParentMessageID(messages[msgIndex]?.messages[swiperIndex].id);
+      }
 
       const res: Messages[] = groupMessagesByBranch(childMessage);
 
-      if (setMessages && state) setMessages(res);
+      if (setMessages) setMessages(res);
     }
   };
 
@@ -169,7 +170,7 @@ export default function Message({
     >
       {messages.map((branch: Messages, index: number) => {
         return branch.messages.length > 1 ? (
-          <div className="w-[600px] h-[100px]" key={index}>
+          <div className="w-[600px]" key={index}>
             <Swiper
               modules={[Navigation, Pagination, Scrollbar, A11y]}
               spaceBetween={50}

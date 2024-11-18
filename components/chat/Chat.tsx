@@ -12,11 +12,12 @@ export default function Chat({
   const [input, setInput] = useState<string>('');
   const [branchID, setBranchID] = useState<number | null>(null);
   const [parentMessageID, setParentMessageID] = useState<number>();
+  const [initParentMessageID, setInitParentMessageID] = useState(true);
 
   useEffect(() => {
-    if (messages.length > 0)
-      setParentMessageID(messages[messages.length - 1].messages[0].id);
-  }, [messages]);
+    if (messages.length > 0 && initParentMessageID)
+      setParentMessageID(messages[messages.length - 1]?.messages[0]?.id);
+  }, [messages, initParentMessageID]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,7 +30,6 @@ export default function Chat({
     }
 
     const branchPayload = { parent_message_id: parentMessageID };
-
     const { data, error } = await createBranch(branchPayload);
 
     if (error) {
@@ -51,6 +51,7 @@ export default function Chat({
       getMessages();
     }
     setInput('');
+    // window.location.reload();
   };
 
   return (
@@ -62,6 +63,7 @@ export default function Chat({
           getMessages={getMessages}
           setParentMessageID={setParentMessageID}
           setMessages={setMessages}
+          setInitParentMessageID={setInitParentMessageID}
         />
       )}
       <div className="w-4/5 p-3 md:p-4 mb-5 bg-[#F4F4F4] rounded-full fixed left-[10%] bottom-0 shadow-lg">

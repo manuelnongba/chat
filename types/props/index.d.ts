@@ -15,6 +15,7 @@ interface MessagesProps {
   setParentMessageID?: (messageID: number) => void;
   created_at?: string;
   messages: Messages[];
+  setInitParentMessageID?: (state: boolean) => void;
 }
 
 interface ButtonProps {

@@ -7,7 +7,7 @@ interface Branch {
 interface Message {
   id: number;
   content: string;
-  parent_message_id: number | null;
+  parent_message_id: number;
 }
 
 interface Messages {
